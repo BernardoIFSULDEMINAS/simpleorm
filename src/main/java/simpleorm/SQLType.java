@@ -1,4 +1,4 @@
-package simple-orm;
+package simpleorm;
 import java.util.Calendar;
 enum SQLType {
 	VarChar, Int, DateTime, Float;

@@ -1,19 +1,20 @@
-package simple-orm;
-import simple-orm.SQLType;
+package simpleorm;
+import simpleorm.SQLType;
 
 class DBField {
 	private String name;
 	private SQLType type;
+	private Class<?> relatedTo;
 	String getName() {
 		return this.name;
 	}
 	void setName(String v) {
 		this.name = v;
 	}
-	Type getType() {
+	SQLType getType() {
 		return this.type;
 	}
-	void setType(Type v) {
+	void setType(SQLType v) {
 		this.type = v;
 	}
 }

@@ -1,13 +1,13 @@
-package simple-orm;
+package simpleorm;
 import java.lang.Annotation;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.HashMap;
-import simple-orm.Table;
-import simple-orm.DBConnection;
-import simple-orm.DBField;
-import simple-orm.SQLField;
-import simple-orm.SQLType;
+import simpleorm.Table;
+import simpleorm.DBConnection;
+import simpleorm.DBField;
+import simpleorm.SQLField;
+import simpleorm.SQLType;
 
 /**
  * Hello world!
