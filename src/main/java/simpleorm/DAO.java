@@ -166,11 +166,11 @@ public class DAO<T>
 		String sql_completo = sb.toString();
 		System.out.println("SQL completo: " + sql_completo);
 		PreparedStatement ps = this.db.getStatement(sql_completo);
-		return true;
+		throw new UnsupportedOperationException();
 	}
 	
 	private boolean mudar(T coisa) throws SQLException {
-		return false;
+		throw new UnsupportedOperationException();
 	}
 	
 	public boolean salvar(T coisa) throws SQLException {
@@ -180,5 +180,17 @@ public class DAO<T>
 			}
 		}
 		return mudar(coisa);
+	}
+	
+	public boolean apagar(T coisa) throws SQLException {
+		throw new UnsupportedOperationException();
+	}
+	
+	public T localizar(Object... ids) throws SQLException {
+		throw new UnsupportedOperationException();
+	}
+	
+	public List<T> getList() {
+		throw new UnsupportedOperationException();
 	}
 }
