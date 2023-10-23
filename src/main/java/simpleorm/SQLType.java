@@ -15,4 +15,29 @@ enum SQLType {
 			return null;
 		}
 	}
+	static void addSimpleToPst(SQLType type, Object value, PreparedStatement pst, int i) {
+		try {
+			switch(type) {
+				case VarChar:
+					pst.setString(i, (String)value);
+					break;
+				case Int:
+					pst.setInt(i, (Integer)value);
+					break;
+				case DateTime:
+					if(Calendar.class.isAssignableFrom(value.getClass())) {
+						java.util.Date d = ((Calendar)par).getTime();
+						pst.setDate(i+1, new java.sql.Date(d.getTime()));
+					} else {
+						throw new IllegalArgumentException("Classe " + value.getClass() + " não bate com tipo " + type);
+					}
+					break;
+				case Float:
+					pst.setDouble(i, (Double)value);
+					break;
+			}
+		} catch(ClassCastException e) {
+			throw new IllegalArgumentException("Classe " + value.getClass() + " não bate com tipo " + type);
+		}
+	}
 }

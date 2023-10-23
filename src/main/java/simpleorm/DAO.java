@@ -22,47 +22,16 @@ import simpleorm.SQLType;
  */
 public class DAO<T>
 {
-	private List<FieldAndDBField> fields = new ArrayList<>();
-	private List<FieldAndDBField> ids = new ArrayList<>();
+	private FieldTree fields = new FieldTree<>();
+	private FieldTree ids = new FieldTree<>();
 	private SQLTable t;
 	private DBConnection db;
 	private Class<T> classe;
 	
-	private class FieldAndDBField {
-		Field javaField;
-		List<DBField> associatedFields;
-	}
-	
-	private static List<DBField> getIdFromClass(Class<?> cl) {
-		SQLTable t = cl.getAnnotation(SQLTable.class);
-		List<DBField> ids = new ArrayList<>();
-		if(t == null) {
-			throw new IllegalArgumentException("Classe " + cl + " não é tabela!");
-		}
-		for(Field p : cl.getDeclaredFields()) {
-			SQLField s_f = p.getAnnotation(SQLField.class);
-			if(s_f == null) {
-				continue;
-			}
-			if(s_f.isId()) {
-				DBField maybe = DBField.fromSimpleField(p);
-				if(maybe != null) {
-					ids.add(maybe);
-				} else {
-					ids.addAll(getIdFromClass(p.getDeclaringClass()));
-				}
-			}
-		}
-		return ids;
-	}
-	
-	private void addField(SQLField s_f, Field javaField, List<DBField> d_f ) {
-		FieldAndDBField fdbf = new FieldAndDBField();
-		fdbf.javaField = javaField;
-		fdbf.associatedFields = d_f;
-		fields.add(fdbf);
+	private void addField(SQLField s_f, FieldTree ft) {
+		fields.getSubFields().add(ft);
 		if(s_f.isId()) {
-			ids.add(fdbf);
+			ids.getSubFields().add(ft);
 		}
 	}
 	
@@ -81,26 +50,24 @@ public class DAO<T>
 			}
 			DBField d_fmaybe = DBField.fromSimpleField(p);
 			if(d_fmaybe != null) {
-				ArrayList<DBField> db_fields = new ArrayList<>(1);
-				db_fields.add(d_fmaybe);
-				addField(s_f, p, db_fields);
+				addField(s_f, new FieldTree(p, d_fmaybe));
 			} else {
 				// É algo relacionado, quando precisamos armazenar algo relacionado, armazenamos suas primary keys
-				List<DBField> ids = getIdFromClass(p.getDeclaringClass());
-				for(DBField id : ids) {
+				FieldTree ids = FieldTree.fromClass(p.getType());
+				ids.setField(p);
+				for(DBField id : ids.toList()) {
 					if(!s_f.value().equals("")) {
 						id.setName(s_f.value());
 					} else {
 						id.setName(s_f.prefix() + id.getName());
 					}
-					id.setRelatedTo(p.getDeclaringClass());
 				}
-				addField(s_f, p, ids);
+				addField(s_f, ids);
 			}
 		}
 	}
 	
-	private Object getFromObj(T coisa, Field p) {
+	private static Object getFromObj(T coisa, Field p) {
 		String javaFieldName = p.getName();
 		String methodName = "get" + javaFieldName.substring(0,1).toUpperCase() + javaFieldName.substring(1);
 		try {
@@ -118,7 +85,7 @@ public class DAO<T>
 		}
 	}
 	
-	private void setFromObj(T coisa, Field p, Object c) {
+	private static void setFromObj(T coisa, Field p, Object c) {
 		String javaFieldName = p.getName();
 		String methodName = "set" + javaFieldName.substring(0,1).toUpperCase() + javaFieldName.substring(1);
 		try {
@@ -133,6 +100,14 @@ public class DAO<T>
 		} catch (Exception e) {
 			//Espero que Java esteja feliz agora
 			throw new RuntimeException(e.getMessage());
+		}
+	}
+	
+	private static void intoPst(DBField df, Object value, PreparedStatement pst, int i) {
+		if(df.getRelatedTo() == null) {
+			SQLType.addSimpleToPst(df.getType(), getFromObj(coisa, fdbf.javaField), ps, i_fields);
+		} else {
+			SQLType.addSimpleToPst(df.getType(), );
 		}
 	}
 	
@@ -166,6 +141,21 @@ public class DAO<T>
 		String sql_completo = sb.toString();
 		System.out.println("SQL completo: " + sql_completo);
 		PreparedStatement ps = this.db.getStatement(sql_completo);
+		int i_fields = 1;
+		for(FieldAndDBField fdbf : this.fields()) {
+			if(getFromObj(coisa, fdbf.javaField) == null && this.ids.contains(fdbf)) {
+				continue;
+			}
+			for(DBField df : fdbf.associatedFields) {
+				if(df.getRelatedTo() == null) {
+					SQLType.addSimpleToPst(df.getType(), getFromObj(coisa, fdbf.javaField), ps, i_fields);
+				} else {
+					
+					SQLType.addSimpleToPst(df.getType(), )
+				}
+				i_fields++;
+			}
+		}
 		throw new UnsupportedOperationException();
 	}
 	
