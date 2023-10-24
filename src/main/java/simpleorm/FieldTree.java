@@ -14,6 +14,14 @@ class FieldTree {
 	static class PathToDbField {
 		ImStack<Field> fieldStack;
 		DBField dbf;
+		@Override public boolean equals(Object o) {
+			if(o == this) {return true;}
+			if(!(o instanceof PathToDbField)) {return false;}
+			PathToDbField other = (PathToDbField)o;
+			if(this.dbf == null) {return other.dbf == null;}
+			if(this.fieldStack == null) {return other.fieldStack == null;}
+			return other.dbf.equals(this.dbf) && other.fieldStack.equals(this.fieldStack);
+		}
 	}
 	private DBField dbField;
 	private List<FieldTree> subFields;

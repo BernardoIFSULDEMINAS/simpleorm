@@ -27,4 +27,17 @@ class ImStack<T> {
     {
         return this.head;
     }
+	
+	@Override public boolean equals(Object o) {
+		try {
+			if(o == this) {return true;}
+			if(!(o instanceof ImStack)) {return false;}
+			ImStack<T> other = (ImStack<T>)o;
+			if(this.head == null) {return other.head == null;}
+			if(this.tail == null) {return other.tail == null;}
+			return this.tail.equals(other.tail);
+		} catch(ClassCastException e) {
+			return false;
+		}
+	}
 }

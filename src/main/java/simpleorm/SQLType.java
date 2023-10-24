@@ -2,6 +2,7 @@ package simpleorm;
 import java.util.Calendar;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Types;
 enum SQLType {
 	VarChar, Int, DateTime, Float;
 	static SQLType fromClass(Class<?> classe) {
@@ -19,6 +20,10 @@ enum SQLType {
 	}
 	static void addSimpleToPst(SQLType type, Object value, PreparedStatement pst, int i) throws SQLException {
 		try {
+			if(value == null) {
+				pst.setNull(i, Types.NULL);
+				System.out.println("Imprimindo coisa de NULL");
+			}
 			switch(type) {
 				case VarChar:
 					pst.setString(i, (String)value);

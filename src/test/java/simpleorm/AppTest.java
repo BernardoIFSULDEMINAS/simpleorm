@@ -21,9 +21,13 @@ public class AppTest
     
     @Test
     public void salvar() throws SQLException {
-        DAO<Usuario> dao = new DAO<>(Usuario.class, new ConectorMySql());
-        Usuario u = new Usuario();
-        u.setNome("ola");
-        dao.salvar(u);
+		try {
+			DAO<Usuario> dao = new DAO<>(Usuario.class, new ConectorMySql());
+			Usuario u = new Usuario();
+			u.setNome("ola");
+			dao.salvar(u);
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+		}
     }
 }

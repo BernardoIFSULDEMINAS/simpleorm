@@ -81,7 +81,6 @@ public class DAO<T>
 			System.err.println(e.getMessage());
 			throw new RuntimeException("Método " + methodName + " precisa ser público!");
 		} catch (Exception e) {
-			//Espero que Java esteja feliz agora
 			throw new RuntimeException(e.getMessage());
 		}
 	}
@@ -108,13 +107,12 @@ public class DAO<T>
 	private static Object getFromPathToDbField(Object coisa, ImStack<Field> st) {
 		Field f = st.peek();
 		st = st.pop();
-		Object val = getFromObj(coisa, f);
 		while(st != null && f != null) {
+			coisa = getFromObj(coisa, f);
 			f = st.peek();
 			st = st.pop();
-			val = getFromObj(val, f);
 		}
-		return val;
+		return coisa;
 	}
 	
 	//Eu tenho mil dessas subclasses que têm literalmente só dois campos
@@ -136,6 +134,13 @@ public class DAO<T>
 		for(int i = 0; i < flat_fields.size(); i++) {
 			FieldTree.PathToDbField pdbf = flat_fields.get(i);
 			Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
+			for(FieldTree.PathToDbField asd : flat_ids) {
+				System.out.println(asd.dbf.getName());
+				System.out.println(pdbf.dbf.getName());
+				System.out.println(asd == pdbf);
+				System.out.println(asd.dbf == pdbf.dbf);
+				System.out.println(asd.fieldStack == pdbf.fieldStack);
+			}
 			if(this_val == null && flat_ids.contains(pdbf)) {
 				continue;
 			}
@@ -194,3 +199,4 @@ public class DAO<T>
 		throw new UnsupportedOperationException();
 	}
 }
+
