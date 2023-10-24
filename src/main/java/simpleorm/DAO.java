@@ -134,13 +134,6 @@ public class DAO<T>
 		for(int i = 0; i < flat_fields.size(); i++) {
 			FieldTree.PathToDbField pdbf = flat_fields.get(i);
 			Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
-			for(FieldTree.PathToDbField asd : flat_ids) {
-				System.out.println(asd.dbf.getName());
-				System.out.println(pdbf.dbf.getName());
-				System.out.println(asd == pdbf);
-				System.out.println(asd.dbf == pdbf.dbf);
-				System.out.println(asd.fieldStack == pdbf.fieldStack);
-			}
 			if(this_val == null && flat_ids.contains(pdbf)) {
 				continue;
 			}
@@ -162,7 +155,6 @@ public class DAO<T>
 		}
 		sb.append(");");
 		String sql_completo = sb.toString();
-		System.out.println("SQL completo: " + sql_completo);
 		PreparedStatement ps = this.db.getStatement(sql_completo);
 		int i_fields = 1;
 		for(ValueAndDbField field : fields) {

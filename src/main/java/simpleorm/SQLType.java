@@ -22,7 +22,6 @@ enum SQLType {
 		try {
 			if(value == null) {
 				pst.setNull(i, Types.NULL);
-				System.out.println("Imprimindo coisa de NULL");
 			}
 			switch(type) {
 				case VarChar:
