@@ -22,8 +22,8 @@ import simpleorm.SQLType;
  */
 public class DAO<T>
 {
-	private FieldTree fields = new FieldTree<>();
-	private FieldTree ids = new FieldTree<>();
+	private FieldTree fields = new FieldTree();
+	private FieldTree ids = new FieldTree();
 	private SQLTable t;
 	private DBConnection db;
 	private Class<T> classe;
@@ -67,9 +67,10 @@ public class DAO<T>
 		}
 	}
 	
-	private static Object getFromObj(T coisa, Field p) {
+	private static Object getFromObj(Object coisa, Field p) {
 		String javaFieldName = p.getName();
 		String methodName = "get" + javaFieldName.substring(0,1).toUpperCase() + javaFieldName.substring(1);
+		Class<?> classe = coisa.getClass();
 		try {
 			Method m = classe.getMethod(methodName);
 			return m.invoke(coisa);
@@ -85,8 +86,9 @@ public class DAO<T>
 		}
 	}
 	
-	private static void setFromObj(T coisa, Field p, Object c) {
+	private static void setFromObj(Object coisa, Field p, Object c) {
 		String javaFieldName = p.getName();
+		Class<?> classe = coisa.getClass();
 		String methodName = "set" + javaFieldName.substring(0,1).toUpperCase() + javaFieldName.substring(1);
 		try {
 			Method m = classe.getMethod(methodName, c.getClass());
@@ -103,37 +105,53 @@ public class DAO<T>
 		}
 	}
 	
-	private static void intoPst(DBField df, Object value, PreparedStatement pst, int i) {
-		if(df.getRelatedTo() == null) {
-			SQLType.addSimpleToPst(df.getType(), getFromObj(coisa, fdbf.javaField), ps, i_fields);
-		} else {
-			SQLType.addSimpleToPst(df.getType(), );
+	private static Object getFromPathToDbField(Object coisa, ImStack<Field> st) {
+		Field f = st.peek();
+		st = st.pop();
+		Object val = getFromObj(coisa, f);
+		while(st != null && f != null) {
+			f = st.peek();
+			st = st.pop();
+			val = getFromObj(val, f);
 		}
+		return val;
+	}
+	
+	//Eu tenho mil dessas subclasses que têm literalmente só dois campos
+	//Por isso que Haskell é melhor: tem tuplas onde você pode armazenar
+	//qualquer grupo de coisas
+	private class ValueAndDbField {
+		Object val;
+		DBField dbf;
 	}
 	
 	private boolean criar(T coisa) throws SQLException {
 		StringBuilder sb = new StringBuilder();
-		int n_fields = 0;
 		sb.append("insert into ");
 		sb.append(this.t.value());
 		sb.append(" (");
-		for(int i = 0; i < this.fields.size(); i++) {
-			FieldAndDBField fdbf = this.fields.get(i);
-			if(getFromObj(coisa, fdbf.javaField) == null && this.ids.contains(fdbf)) {
+		List<ValueAndDbField> fields = new ArrayList<>();
+		List<FieldTree.PathToDbField> flat_fields = this.fields.traverse();
+		List<FieldTree.PathToDbField> flat_ids = this.ids.traverse();
+		for(int i = 0; i < flat_fields.size(); i++) {
+			FieldTree.PathToDbField pdbf = flat_fields.get(i);
+			Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
+			if(this_val == null && flat_ids.contains(pdbf)) {
 				continue;
 			}
-			for(int j = 0; j < fdbf.associatedFields.size(); j++) {
-				sb.append(fdbf.associatedFields.get(j).getName());
-				n_fields++;
-				if(!(j == fdbf.associatedFields.size() - 1 && i == this.fields.size() - 1)) {
-					sb.append(",");
-				}
+			ValueAndDbField vdbf = new ValueAndDbField();
+			vdbf.val = this_val;
+			vdbf.dbf = pdbf.dbf;
+			fields.add(vdbf);
+			sb.append(pdbf.dbf.getName());
+			if(i != flat_fields.size() - 1) {
+				sb.append(",");
 			}
 		}
 		sb.append(") values (");
-		for(int i = 0; i < n_fields; i++) {
+		for(int i = 0; i < fields.size(); i++) {
 			sb.append("?");
-			if(i != n_fields - 1) {
+			if(i != fields.size() - 1) {
 				sb.append(",");
 			}
 		}
@@ -142,21 +160,13 @@ public class DAO<T>
 		System.out.println("SQL completo: " + sql_completo);
 		PreparedStatement ps = this.db.getStatement(sql_completo);
 		int i_fields = 1;
-		for(FieldAndDBField fdbf : this.fields()) {
-			if(getFromObj(coisa, fdbf.javaField) == null && this.ids.contains(fdbf)) {
-				continue;
-			}
-			for(DBField df : fdbf.associatedFields) {
-				if(df.getRelatedTo() == null) {
-					SQLType.addSimpleToPst(df.getType(), getFromObj(coisa, fdbf.javaField), ps, i_fields);
-				} else {
-					
-					SQLType.addSimpleToPst(df.getType(), )
-				}
-				i_fields++;
-			}
+		for(ValueAndDbField field : fields) {
+			SQLType.addSimpleToPst(field.dbf.getType(), field.val, ps, i_fields);
+			i_fields++;
 		}
-		throw new UnsupportedOperationException();
+		int ret = ps.executeUpdate();
+		// Teria algo de muito errado se retornasse mais de 1, mas deixa assim por enquanto
+		return ret > 0;
 	}
 	
 	private boolean mudar(T coisa) throws SQLException {
@@ -164,12 +174,12 @@ public class DAO<T>
 	}
 	
 	public boolean salvar(T coisa) throws SQLException {
-		for(FieldAndDBField fdbf : this.ids) {
-			if(getFromObj(coisa,fdbf.javaField) == null) {
+		/*for(FieldAndDBField fdbf : this.ids) {
+			if(getFromObj(coisa,fdbf.javaField) == null) {*/
 				return criar(coisa);
-			}
+			/*}
 		}
-		return mudar(coisa);
+		return mudar(coisa);*/
 	}
 	
 	public boolean apagar(T coisa) throws SQLException {

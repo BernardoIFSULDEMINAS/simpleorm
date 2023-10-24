@@ -1,7 +1,9 @@
 package simpleorm;
-import java.util.Stream;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.stream.Collectors;
 import java.lang.reflect.Field;
 
 class FieldTree {
@@ -9,6 +11,10 @@ class FieldTree {
 	// e dbField se se referir a um tipo primitivo
 	// field NÃO é de o tipo de dbField, field é onde está o dbField
 	// numa classe.
+	static class PathToDbField {
+		ImStack<Field> fieldStack;
+		DBField dbf;
+	}
 	private DBField dbField;
 	private List<FieldTree> subFields;
 	private Field field;
@@ -36,23 +42,30 @@ class FieldTree {
 		setSubFields(new ArrayList<FieldTree>());
 	}
 	public FieldTree(Field p, DBField dbf) {
-		setDBField(dbf);
+		setDbField(dbf);
 		setField(p);
 	}
 	public List<DBField> toList() {
-		return traverseTree(this);
+		return traverseTree(this, new ImStack<Field>()).stream().map(x -> x.dbf).collect(Collectors.toList());
 	}
-	private static List<DBField> traverseTree(FieldTree t) {
-		List<DBField> empty = new ArrayList<>();
+	public List<PathToDbField> traverse() {
+		return traverseTree(this, new ImStack<Field>());
+	}
+	private static List<PathToDbField> traverseTree(FieldTree t, ImStack<Field> s) {
+		List<PathToDbField> empty = new ArrayList<>();
+		s = s.push(t.getField());
 		if(t.getSubFields() == null) {
-			empty.add(t.getDbField());
+			PathToDbField pdbf = new PathToDbField();
+			pdbf.dbf = t.getDbField();
+			pdbf.fieldStack = s;
+			empty.add(pdbf);
 			return empty;
 		} else {
 			for(FieldTree t_o : t.getSubFields()) {
 				// Já fiz uns 5 algoritmos recursivos nesse projeto...
-				empty.addAll(traverseTree(t_o));
-				return empty;
+				empty.addAll(traverseTree(t_o, s));
 			}
+			return empty;
 		}
 	}/*
 	private DBField next() {
@@ -70,7 +83,7 @@ class FieldTree {
 	
 	public static FieldTree fromClass(Class<?> cl) {
 		SQLTable t = cl.getAnnotation(SQLTable.class);
-		FieldTree tree = new FieldTree<>();
+		FieldTree tree = new FieldTree();
 		tree.setSubFields(new ArrayList<FieldTree>());
 		List<FieldTree> ids = tree.getSubFields();
 		if(t == null) {
@@ -83,14 +96,13 @@ class FieldTree {
 			}
 			if(s_f.isId()) {
 				DBField maybe = DBField.fromSimpleField(p);
-				FieldTree this_tree = new FieldAndDBField();
-				this_tree.setField(p);
 				if(maybe != null) {
-					this_tree.setDBField(maybe);
-					ids.add(maybe);
-				} else {
-					this_tree.setSubFields(FieldTree.fromClass(p.getType()));
+					FieldTree this_tree = new FieldTree();
+					this_tree.setField(p);
+					this_tree.setDbField(maybe);
 					ids.add(this_tree);
+				} else {
+					ids.add(FieldTree.fromClass(p.getType()));
 				}
 			}
 		}

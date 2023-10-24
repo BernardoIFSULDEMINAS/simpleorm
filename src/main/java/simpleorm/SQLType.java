@@ -1,5 +1,7 @@
 package simpleorm;
 import java.util.Calendar;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 enum SQLType {
 	VarChar, Int, DateTime, Float;
 	static SQLType fromClass(Class<?> classe) {
@@ -15,7 +17,7 @@ enum SQLType {
 			return null;
 		}
 	}
-	static void addSimpleToPst(SQLType type, Object value, PreparedStatement pst, int i) {
+	static void addSimpleToPst(SQLType type, Object value, PreparedStatement pst, int i) throws SQLException {
 		try {
 			switch(type) {
 				case VarChar:
@@ -26,7 +28,7 @@ enum SQLType {
 					break;
 				case DateTime:
 					if(Calendar.class.isAssignableFrom(value.getClass())) {
-						java.util.Date d = ((Calendar)par).getTime();
+						java.util.Date d = ((Calendar)value).getTime();
 						pst.setDate(i+1, new java.sql.Date(d.getTime()));
 					} else {
 						throw new IllegalArgumentException("Classe " + value.getClass() + " não bate com tipo " + type);
