@@ -44,10 +44,14 @@ class FieldTree {
 		return this.field;
 	}
 	public void setField(Field f) {
+		if(f == null) {
+			System.out.println("Alguém settando para null");
+		}
 		this.field = f;
 	}
-	public FieldTree() {
+	public FieldTree(Field p) {
 		setSubFields(new ArrayList<FieldTree>());
+		setField(p);
 	}
 	public FieldTree(Field p, DBField dbf) {
 		setDbField(dbf);
@@ -61,6 +65,9 @@ class FieldTree {
 	}
 	private static List<PathToDbField> traverseTree(FieldTree t, ImStack<Field> s) {
 		List<PathToDbField> empty = new ArrayList<>();
+		if(t.getField() == null) {
+			System.out.println("Achou null!");
+		}
 		s = s.push(t.getField());
 		if(t.getSubFields() == null) {
 			PathToDbField pdbf = new PathToDbField();
@@ -90,8 +97,9 @@ class FieldTree {
 	}*/
 	
 	public static FieldTree fromClass(Class<?> cl) {
+		System.out.println("Fazendo de " + cl);
 		SQLTable t = cl.getAnnotation(SQLTable.class);
-		FieldTree tree = new FieldTree();
+		FieldTree tree = new FieldTree(null);
 		tree.setSubFields(new ArrayList<FieldTree>());
 		List<FieldTree> ids = tree.getSubFields();
 		if(t == null) {
@@ -105,8 +113,7 @@ class FieldTree {
 			if(s_f.isId()) {
 				DBField maybe = DBField.fromSimpleField(p);
 				if(maybe != null) {
-					FieldTree this_tree = new FieldTree();
-					this_tree.setField(p);
+					FieldTree this_tree = new FieldTree(p);
 					this_tree.setDbField(maybe);
 					ids.add(this_tree);
 				} else {

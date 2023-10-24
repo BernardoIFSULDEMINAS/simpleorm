@@ -40,4 +40,8 @@ class ImStack<T> {
 			return false;
 		}
 	}
+	
+	@Override public String toString() {
+		return (head != null ? head.toString() : "head vazia") + ", " + (tail != null ? tail.toString() : "fim");
+	}
 }

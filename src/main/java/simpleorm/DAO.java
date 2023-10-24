@@ -22,8 +22,8 @@ import simpleorm.SQLType;
  */
 public class DAO<T>
 {
-	private FieldTree fields = new FieldTree();
-	private FieldTree ids = new FieldTree();
+	private FieldTree fields = new FieldTree(null);
+	private FieldTree ids = new FieldTree(null);
 	private SQLTable t;
 	private DBConnection db;
 	private Class<T> classe;
@@ -105,9 +105,11 @@ public class DAO<T>
 	}
 	
 	private static Object getFromPathToDbField(Object coisa, ImStack<Field> st) {
+		System.out.println(st);
 		Field f = st.peek();
 		st = st.pop();
 		while(st != null && f != null) {
+			System.out.println("Analisando " + f);
 			coisa = getFromObj(coisa, f);
 			f = st.peek();
 			st = st.pop();
