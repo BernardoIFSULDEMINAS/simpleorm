@@ -42,7 +42,9 @@ public class AppTest
 			DAO<Post> dao = new DAO<>(Post.class, new ConectorMySql());
 			Post p = new Post();
 			p.setTexto("olá");
-			p.setAuthor(usuarioExemplo());
+                        Usuario u = usuarioExemplo();
+                        u.setCodigo(1);
+			p.setAuthor(u);
 			assertTrue(dao.salvar(p));
 		} catch (RuntimeException e) {
 			e.printStackTrace();

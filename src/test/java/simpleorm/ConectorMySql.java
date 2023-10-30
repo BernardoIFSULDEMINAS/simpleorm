@@ -22,6 +22,7 @@ public class ConectorMySql implements DBConnection {
         }
     }
     public PreparedStatement getStatement(String sql) throws SQLException {
+        System.out.println("Rodando sql: " + sql);
         return con.prepareStatement(sql);
     }
 }

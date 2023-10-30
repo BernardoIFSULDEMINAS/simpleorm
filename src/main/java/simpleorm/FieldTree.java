@@ -20,6 +20,8 @@ class FieldTree {
 			PathToDbField other = (PathToDbField)o;
 			if(this.dbf == null) {return other.dbf == null;}
 			if(this.fieldStack == null) {return other.fieldStack == null;}
+                        if((this.dbf == null) != (other.dbf == null)) return false;
+                        if((this.fieldStack == null) != (other.fieldStack == null)) return false;
 			return other.dbf.equals(this.dbf) && other.fieldStack.equals(this.fieldStack);
 		}
 	}
@@ -44,9 +46,6 @@ class FieldTree {
 		return this.field;
 	}
 	public void setField(Field f) {
-		if(f == null) {
-			System.out.println("Alguém settando para null");
-		}
 		this.field = f;
 	}
 	public FieldTree(Field p) {
@@ -58,16 +57,15 @@ class FieldTree {
 		setField(p);
 	}
 	public List<DBField> toList() {
-		return traverseTree(this, new ImStack<Field>()).stream().map(x -> x.dbf).collect(Collectors.toList());
+		return traverse().stream().map(x -> x.dbf).collect(Collectors.toList());
 	}
 	public List<PathToDbField> traverse() {
-		return traverseTree(this, new ImStack<Field>());
+		List<PathToDbField> ret = traverseTree(this, new ImStack<Field>());
+                ret.forEach(x -> {x.fieldStack = x.fieldStack.reverseAndFilter(f -> f != null);});
+                return ret;
 	}
 	private static List<PathToDbField> traverseTree(FieldTree t, ImStack<Field> s) {
 		List<PathToDbField> empty = new ArrayList<>();
-		if(t.getField() == null) {
-			System.out.println("Achou null!");
-		}
 		s = s.push(t.getField());
 		if(t.getSubFields() == null) {
 			PathToDbField pdbf = new PathToDbField();
@@ -82,22 +80,8 @@ class FieldTree {
 			}
 			return empty;
 		}
-	}/*
-	private DBField next() {
-		Stack treeStack;
-		Stack iterStack;
-		while(t.getSubFields() == null) {
-			if(currentIter.hasNext()) {
-				t = currentIter.next();
-			} else {
-				t = a.pop();
-				
-			}
-		}
-	}*/
-	
+	}
 	public static FieldTree fromClass(Class<?> cl) {
-		System.out.println("Fazendo de " + cl);
 		SQLTable t = cl.getAnnotation(SQLTable.class);
 		FieldTree tree = new FieldTree(null);
 		tree.setSubFields(new ArrayList<FieldTree>());

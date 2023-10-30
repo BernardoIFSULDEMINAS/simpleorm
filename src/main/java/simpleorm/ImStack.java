@@ -1,4 +1,5 @@
 package simpleorm;
+import java.util.function.Predicate;
 class ImStack<T> {
 
     private final T head;
@@ -35,7 +36,9 @@ class ImStack<T> {
 			ImStack<T> other = (ImStack<T>)o;
 			if(this.head == null) {return other.head == null;}
 			if(this.tail == null) {return other.tail == null;}
-			return this.tail.equals(other.tail);
+                        if((this.head == null) != (other.head == null)) return false;
+                        if((this.tail == null) != (other.tail == null)) return false;
+			return this.head.equals(other.head) && this.tail.equals(other.tail);
 		} catch(ClassCastException e) {
 			return false;
 		}
@@ -44,4 +47,23 @@ class ImStack<T> {
 	@Override public String toString() {
 		return (head != null ? head.toString() : "head vazia") + ", " + (tail != null ? tail.toString() : "fim");
 	}
+    public ImStack<T> reverse() {
+        return this.reverseInner(new ImStack<T>(), x -> true);
+    }
+    public ImStack<T> reverseAndFilter(Predicate<T> p) {
+        return this.reverseInner(new ImStack<T>(), p);
+    }
+    private ImStack<T> reverseInner(ImStack<T> acc, Predicate<T> p) {
+        if(isEmpty()) {
+            return acc;
+        }
+        if(p.test(head)) {
+            return tail.reverseInner(acc.push(head), p);
+        } else {
+            return tail.reverseInner(acc, p);
+        }
+    }
+    public boolean isEmpty() {
+        return head == null && tail == null;
+    }
 }
