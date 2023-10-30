@@ -22,16 +22,16 @@ import simpleorm.SQLType;
  */
 public class DAO<T>
 {
-	private FieldTree fields = new FieldTree(null);
-	private FieldTree ids = new FieldTree(null);
+	private List<PathToDbField> fields;
+	private List<PathToDbField> ids;
 	private SQLTable t;
 	private DBConnection db;
 	private Class<T> classe;
 	
-	private void addField(SQLField s_f, FieldTree ft) {
-		fields.getSubFields().add(ft);
+	private static void addField(SQLField s_f, FieldTree new_t, FieldTree fieldsTree, FieldTree idsTree) {
+		fieldsTree.getSubFields().add(new_t);
 		if(s_f.isId()) {
-			ids.getSubFields().add(ft);
+			idsTree.getSubFields().add(new_t);
 		}
 	}
 	
@@ -43,6 +43,8 @@ public class DAO<T>
 			throw new IllegalArgumentException("Classe " + cl + " não é tabela!");
 		}
 		this.t = t;
+                FieldTree fieldsTree = new FieldTree(null);
+                FieldTree idsTree = new FieldTree(null);
 		for(Field p : cl.getDeclaredFields()) {
 			SQLField s_f = p.getAnnotation(SQLField.class);
 			if(s_f == null) {
@@ -50,7 +52,7 @@ public class DAO<T>
 			}
 			DBField d_fmaybe = DBField.fromSimpleField(p);
 			if(d_fmaybe != null) {
-				addField(s_f, new FieldTree(p, d_fmaybe));
+				addField(s_f, new FieldTree(p, d_fmaybe), fieldsTree, idsTree);
 			} else {
 				// É algo relacionado, quando precisamos armazenar algo relacionado, armazenamos suas primary keys
 				FieldTree ids = FieldTree.fromClass(p.getType());
@@ -62,9 +64,11 @@ public class DAO<T>
 						id.setName(s_f.prefix() + id.getName());
 					}
 				}
-				addField(s_f, ids);
+				addField(s_f, ids, fieldsTree, idsTree);
 			}
 		}
+                this.fields = fieldsTree.traverse();
+                this.ids = idsTree.traverse();
 	}
 	
 	private static Object getFromObj(Object coisa, Field p) {
@@ -128,28 +132,26 @@ public class DAO<T>
 		sb.append("insert into ");
 		sb.append(this.t.value());
 		sb.append(" (");
-		List<ValueAndDbField> fields = new ArrayList<>();
-		List<FieldTree.PathToDbField> flat_fields = this.fields.traverse();
-		List<FieldTree.PathToDbField> flat_ids = this.ids.traverse();
-		for(int i = 0; i < flat_fields.size(); i++) {
-			FieldTree.PathToDbField pdbf = flat_fields.get(i);
+		List<ValueAndDbField> nonidfields = new ArrayList<>();
+		for(int i = 0; i < fields.size(); i++) {
+			PathToDbField pdbf = fields.get(i);
 			Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
-			if(this_val == null && flat_ids.contains(pdbf)) {
+			if(this_val == null && ids.contains(pdbf)) {
 				continue;
 			}
 			ValueAndDbField vdbf = new ValueAndDbField();
 			vdbf.val = this_val;
 			vdbf.dbf = pdbf.dbf;
-			fields.add(vdbf);
+			nonidfields.add(vdbf);
 			sb.append(pdbf.dbf.getName());
-			if(i != flat_fields.size() - 1) {
+			if(i != fields.size() - 1) {
 				sb.append(",");
 			}
 		}
 		sb.append(") values (");
-		for(int i = 0; i < fields.size(); i++) {
+		for(int i = 0; i < nonidfields.size(); i++) {
 			sb.append("?");
-			if(i != fields.size() - 1) {
+			if(i != nonidfields.size() - 1) {
 				sb.append(",");
 			}
 		}
@@ -157,7 +159,7 @@ public class DAO<T>
 		String sql_completo = sb.toString();
 		PreparedStatement ps = this.db.getStatement(sql_completo);
 		int i_fields = 1;
-		for(ValueAndDbField field : fields) {
+		for(ValueAndDbField field : nonidfields) {
 			SQLType.addSimpleToPst(field.dbf.getType(), field.val, ps, i_fields);
 			i_fields++;
 		}

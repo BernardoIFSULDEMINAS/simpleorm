@@ -11,20 +11,6 @@ class FieldTree {
 	// e dbField se se referir a um tipo primitivo
 	// field NÃO é de o tipo de dbField, field é onde está o dbField
 	// numa classe.
-	static class PathToDbField {
-		ImStack<Field> fieldStack;
-		DBField dbf;
-		@Override public boolean equals(Object o) {
-			if(o == this) {return true;}
-			if(!(o instanceof PathToDbField)) {return false;}
-			PathToDbField other = (PathToDbField)o;
-			if(this.dbf == null) {return other.dbf == null;}
-			if(this.fieldStack == null) {return other.fieldStack == null;}
-                        if((this.dbf == null) != (other.dbf == null)) return false;
-                        if((this.fieldStack == null) != (other.fieldStack == null)) return false;
-			return other.dbf.equals(this.dbf) && other.fieldStack.equals(this.fieldStack);
-		}
-	}
 	private DBField dbField;
 	private List<FieldTree> subFields;
 	private Field field;
