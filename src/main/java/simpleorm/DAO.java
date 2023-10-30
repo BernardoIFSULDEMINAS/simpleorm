@@ -126,28 +126,51 @@ public class DAO<T>
 		Object val;
 		DBField dbf;
 	}
-	
+        
+        private List<ValueAndDbField> addNonIdParens(T coisa, StringBuilder sb) {
+            if(sb != null) sb.append(" (");
+            List<ValueAndDbField> nonidparens = new ArrayList<>();
+            for(int i = 0; i < fields.size(); i++) {
+                PathToDbField pdbf = fields.get(i);
+                Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
+                if(this_val == null && ids.contains(pdbf)) {
+                        continue;
+                }
+                ValueAndDbField vdbf = new ValueAndDbField();
+                vdbf.val = this_val;
+                vdbf.dbf = pdbf.dbf;
+                nonidparens.add(vdbf);
+                if(sb != null) sb.append(pdbf.dbf.getName());
+                if(i != fields.size() - 1 && sb != null) {
+                        sb.append(",");
+                }
+            }
+            return nonidparens;
+        }
+        
+        private List<ValueAndDbField> addIdParens(T coisa, StringBuilder sb) {
+            if(sb != null) sb.append(" (");
+            List<ValueAndDbField> idparens = new ArrayList<>();
+            for(int i = 0; i < ids.size(); i++) {
+                PathToDbField pdbf = ids.get(i);
+                Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
+                ValueAndDbField vdbf = new ValueAndDbField();
+                vdbf.val = this_val;
+                vdbf.dbf = pdbf.dbf;
+                idparens.add(vdbf);
+                if(sb != null) sb.append(pdbf.dbf.getName());
+                if(i != ids.size() - 1 && sb != null) {
+                        sb.append(",");
+                }
+            }
+            return idparens;
+        }
+        
 	private boolean criar(T coisa) throws SQLException {
 		StringBuilder sb = new StringBuilder();
 		sb.append("insert into ");
 		sb.append(this.t.value());
-		sb.append(" (");
-		List<ValueAndDbField> nonidfields = new ArrayList<>();
-		for(int i = 0; i < fields.size(); i++) {
-			PathToDbField pdbf = fields.get(i);
-			Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
-			if(this_val == null && ids.contains(pdbf)) {
-				continue;
-			}
-			ValueAndDbField vdbf = new ValueAndDbField();
-			vdbf.val = this_val;
-			vdbf.dbf = pdbf.dbf;
-			nonidfields.add(vdbf);
-			sb.append(pdbf.dbf.getName());
-			if(i != fields.size() - 1) {
-				sb.append(",");
-			}
-		}
+		List<ValueAndDbField> nonidfields = addNonIdParens(coisa, sb);
 		sb.append(") values (");
 		for(int i = 0; i < nonidfields.size(); i++) {
 			sb.append("?");
@@ -169,16 +192,50 @@ public class DAO<T>
 	}
 	
 	private boolean mudar(T coisa) throws SQLException {
-		throw new UnsupportedOperationException();
+            StringBuilder sb = new StringBuilder();
+            sb.append("update ");
+            sb.append(this.t.value());
+            sb.append(" set ");
+            List<ValueAndDbField> nonidfields = addNonIdParens(coisa, null);
+            for(int i = 0; i < nonidfields.size(); i++) {
+                ValueAndDbField vdbf = nonidfields.get(i);
+                sb.append(vdbf.dbf.getName());
+                sb.append("=?");
+                if(i != nonidfields.size() - 1) {
+                    sb.append(",");
+                }
+            }
+            sb.append(" where ");
+            List<ValueAndDbField> idfields = addIdParens(coisa, null);
+            for(int i = 0; i < idfields.size(); i++) {
+                ValueAndDbField vdbf = idfields.get(i);
+                sb.append(vdbf.dbf.getName());
+                sb.append("=?");
+                if(i != idfields.size() - 1) {
+                    sb.append(" and ");
+                }
+            }
+            sb.append(";");
+            PreparedStatement ps = this.db.getStatement(sb.toString());
+            int i_fields = 1;
+            for(ValueAndDbField vdbf : nonidfields) {
+                SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_fields);
+                i_fields++;
+            }
+            for(ValueAndDbField vdbf : idfields) {
+                SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_fields);
+                i_fields++;
+            }
+            return ps.executeUpdate() > 0;
 	}
 	
 	public boolean salvar(T coisa) throws SQLException {
-		/*for(FieldAndDBField fdbf : this.ids) {
-			if(getFromObj(coisa,fdbf.javaField) == null) {*/
+		for(PathToDbField pdbf : this.ids) {
+			if(getFromPathToDbField(coisa,pdbf.fieldStack) == null) {
 				return criar(coisa);
-			/*}
+			}
 		}
-		return mudar(coisa);*/
+		return mudar(coisa);
 	}
 	
 	public boolean apagar(T coisa) throws SQLException {
