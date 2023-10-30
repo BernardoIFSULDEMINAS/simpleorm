@@ -124,7 +124,7 @@ public class DAO<T>
             f = st.peek();
             st = st.pop();
             try {
-                while(st != null && f != null) {
+                while(st != null && f != null && !st.isEmpty()) {
                     Object coisa_t = getFromObj(coisa, f);
                     if(coisa_t == null) {
                         setFromObj(coisa, f, f.getType().getConstructor().newInstance());
@@ -299,11 +299,50 @@ public class DAO<T>
         }
         
 	public T localizar(Object... ids) throws SQLException {
-		throw new UnsupportedOperationException();
+            StringBuilder sb = new StringBuilder();
+            sb.append("select * from ");
+            sb.append(this.t.value());
+            sb.append(" where ");
+            if(ids.length != this.ids.size()) {
+                throw new IllegalArgumentException("Por favor dê " + this.ids.size() + " argumentos");
+            }
+            List<ValueAndDbField> idparams = new ArrayList<>();
+            for(int i = 0; i < this.ids.size(); i++) {
+                PathToDbField pdbf = this.ids.get(i);
+                sb.append(pdbf.dbf.getName());
+                sb.append("=?");
+                ValueAndDbField vdbf = new ValueAndDbField();
+                vdbf.dbf = pdbf.dbf;
+                vdbf.val = ids[i];
+                idparams.add(vdbf);
+                if(i != this.ids.size() - 1) {
+                    sb.append(",");
+                }
+            }
+            sb.append(";");
+            PreparedStatement ps = this.db.getStatement(sb.toString());
+            int i_query = 1;
+            for(ValueAndDbField vdbf : idparams) {
+                SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_query);
+                i_query++;
+            }
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            return fromRs(rs);
 	}
 	
-	public List<T> getList() {
-		throw new UnsupportedOperationException();
+	public List<T> getList() throws SQLException {
+            StringBuilder sb = new StringBuilder();
+            sb.append("select * from ");
+            sb.append(this.t.value());
+            sb.append(";");
+            PreparedStatement ps = this.db.getStatement(sb.toString());
+            ResultSet rs = ps.executeQuery();
+            List<T> ret = new ArrayList<>();
+            while(rs.next()) {
+                ret.add(fromRs(rs));
+            }
+            return ret;
 	}
 }
 

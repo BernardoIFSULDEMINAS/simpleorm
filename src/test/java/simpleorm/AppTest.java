@@ -78,6 +78,7 @@ public class AppTest
                 u.setCodigo(1);
                 u.setNome("joão_mudado");
                 assertTrue(dao.salvar(u));
+                assertEquals(dao.localizar(1), u);
             } catch(RuntimeException e) {
                 e.printStackTrace();
                 throw e;
@@ -121,3 +122,4 @@ public class AppTest
             }
         }
 }
+
