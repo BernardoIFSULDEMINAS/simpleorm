@@ -106,4 +106,18 @@ public class AppTest
                 throw e;
             }
         }
+        
+        @Test
+        public void apagar() throws SQLException {
+            Assume.assumeFalse(criouUser);
+            try {
+                DAO<Usuario> dao = new DAO<>(Usuario.class, new ConectorMySql());
+                Usuario u = usuarioExemplo();
+                u.setCodigo(5);
+                assertTrue(dao.apagar(u));
+            } catch(RuntimeException e) {
+                e.printStackTrace();
+                throw e;
+            }
+        }
 }

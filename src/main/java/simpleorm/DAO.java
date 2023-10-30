@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import simpleorm.SQLTable;
 import simpleorm.DBConnection;
@@ -118,7 +119,26 @@ public class DAO<T>
 		}
 		return coisa;
 	}
-	
+	private static void setFromPathToDbField(Object coisa, ImStack<Field> st, Object val) {
+            Field f;
+            f = st.peek();
+            st = st.pop();
+            try {
+                while(st != null && f != null) {
+                    Object coisa_t = getFromObj(coisa, f);
+                    if(coisa_t == null) {
+                        setFromObj(coisa, f, f.getType().getConstructor().newInstance());
+                        coisa_t = getFromObj(coisa, f);
+                    }
+                    coisa = coisa_t;
+                    f = st.peek();
+                    st = st.pop();
+                }
+                setFromObj(coisa, f, val);
+            } catch(InstantiationException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException("Classe " + f.getType() + " precisa ter um construtor vazio público");
+            }
+        }
 	//Eu tenho mil dessas subclasses que têm literalmente só dois campos
 	//Por isso que Haskell é melhor: tem tuplas onde você pode armazenar
 	//qualquer grupo de coisas
@@ -239,9 +259,45 @@ public class DAO<T>
 	}
 	
 	public boolean apagar(T coisa) throws SQLException {
-		throw new UnsupportedOperationException();
+            StringBuilder sb = new StringBuilder();
+            sb.append("delete from ");
+            sb.append(this.t.value());
+            sb.append(" where ");
+            List<ValueAndDbField> idfields = addIdParens(coisa, null);
+            for(int i = 0; i < idfields.size(); i++) {
+                ValueAndDbField vdbf = idfields.get(i);
+                sb.append(vdbf.dbf.getName());
+                sb.append("=?");
+                if(i != idfields.size() - 1) {
+                    sb.append(" and ");
+                }
+            }
+            sb.append(";");
+            PreparedStatement ps = this.db.getStatement(sb.toString());
+            int i_fields = 1;
+            for(ValueAndDbField vdbf : idfields) {
+                SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_fields);
+                i_fields++;
+            }
+            return ps.executeUpdate() > 0;
 	}
 	
+        private T fromRs(ResultSet rs) throws SQLException {
+            try {
+                T coisa = this.classe.getConstructor().newInstance();
+                for(PathToDbField pdbf : this.fields) {
+                    setFromPathToDbField(coisa, pdbf.fieldStack, SQLType.fromSimpleToPst(pdbf.dbf, rs, pdbf.dbf.getJavaClass()));
+                }
+                return coisa;
+            } catch(NoSuchMethodException e) {
+                System.err.println(e.getMessage());
+                throw new RuntimeException("Classe " + this.classe + " deve ter um construtor vazio!");
+            } catch (Exception e) {
+                //Espero que Java esteja feliz agora
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+        
 	public T localizar(Object... ids) throws SQLException {
 		throw new UnsupportedOperationException();
 	}
@@ -250,4 +306,5 @@ public class DAO<T>
 		throw new UnsupportedOperationException();
 	}
 }
+
 
