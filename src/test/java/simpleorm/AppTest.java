@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 import java.sql.SQLException;
-import org.junit.Assume;
 
 /**
  * Unit test for simple App.
@@ -14,9 +13,6 @@ public class AppTest
     /**
      * Rigorous Test :-)
      */
-    private static boolean criouPost = false;
-    private static boolean criouUser = false;
-    private static boolean criouUser2 = false;
     @Test
     public void shouldAnswerWithTrue()
     {
@@ -26,12 +22,13 @@ public class AppTest
 	public Usuario usuarioExemplo() {
 		Usuario u = new Usuario();
 		u.setNome("joão");
+		u.setCodigo(1);
 		return u;
 	}
         
         public Usuario usuarioExemplo2() {
             Usuario u = new Usuario();
-            u.setNome("joão");
+            u.setNome("joão2");
             return u;
         }
         
@@ -44,12 +41,25 @@ public class AppTest
             return p;
         }
 	
+	@Test
+	public void testePrincipal() throws SQLException {
+		// Rode mvn test -e -Dtest=AppTest#testePrincipal
+		// Depois de cada teste, no SQL:
+		// delete from post; alter table post auto_increment = 1; delete from user; alter table user auto_increment = 1;
+		salvarSimples();
+		salvarRelacionado();
+		mudarSimples();
+		mudarRelacionado();
+		apagar();
+	}
+	
     @Test
     public void salvarSimples() throws SQLException {
 		try {
 			DAO<Usuario> dao = new DAO<>(Usuario.class, new ConectorMySql());
-                        criouUser = true;
-			assertTrue(dao.salvar(usuarioExemplo()));
+            Usuario u = usuarioExemplo();
+            u.setCodigo(null);
+			assertTrue(dao.salvar(u));
 		} catch (RuntimeException e) {
 			e.printStackTrace();
 			throw e;
@@ -59,10 +69,12 @@ public class AppTest
 	@Test
 	public void salvarRelacionado() throws SQLException {
 		try {
-			DAO<Post> dao = new DAO<>(Post.class, new ConectorMySql());
-			Post p = postExemplo();
-                        criouPost = true;
-			assertTrue(dao.salvar(p));
+            DAO<Post> dao = new DAO<>(Post.class, new ConectorMySql());
+            Post p = postExemplo();
+            assertTrue(dao.salvar(p));
+            p.setCodigo(1);
+            assertEquals(p, dao.localizar(1));
+			
 		} catch (RuntimeException e) {
 			e.printStackTrace();
 			throw e;
@@ -71,14 +83,12 @@ public class AppTest
         
         @Test
         public void mudarSimples() throws SQLException {
-            Assume.assumeTrue(criouUser);
             try {
                 DAO<Usuario> dao = new DAO<>(Usuario.class, new ConectorMySql());
                 Usuario u = usuarioExemplo();
-                u.setCodigo(1);
                 u.setNome("joão_mudado");
                 assertTrue(dao.salvar(u));
-                assertEquals(dao.localizar(1), u);
+                assertEquals(u, dao.localizar(1));
             } catch(RuntimeException e) {
                 e.printStackTrace();
                 throw e;
@@ -87,16 +97,12 @@ public class AppTest
         
         @Test
         public void mudarRelacionado() throws SQLException {
-            Assume.assumeTrue(criouPost);
             try {
                 DAO<Post> dao = new DAO<>(Post.class, new ConectorMySql());
                 Usuario nu = usuarioExemplo2();
                 nu.setCodigo(2);
-                if(!criouUser2) {
-                    DAO<Usuario> dao_user = new DAO<>(Usuario.class, new ConectorMySql());
-                    dao_user.salvar(usuarioExemplo2());
-                    criouUser2 = true;
-                }
+				DAO<Usuario> dao_user = new DAO<>(Usuario.class, new ConectorMySql());
+				dao_user.salvar(usuarioExemplo2());
                 Post p = postExemplo();
                 p.setCodigo(1);
                 p.setTexto("texto_mudado");
@@ -110,12 +116,11 @@ public class AppTest
         
         @Test
         public void apagar() throws SQLException {
-            Assume.assumeFalse(criouUser);
             try {
-                DAO<Usuario> dao = new DAO<>(Usuario.class, new ConectorMySql());
-                Usuario u = usuarioExemplo();
-                u.setCodigo(5);
-                assertTrue(dao.apagar(u));
+                DAO<Post> dao = new DAO<>(Post.class, new ConectorMySql());
+                Post p = postExemplo();
+                p.setCodigo(1);
+                assertTrue(dao.apagar(p));
             } catch(RuntimeException e) {
                 e.printStackTrace();
                 throw e;

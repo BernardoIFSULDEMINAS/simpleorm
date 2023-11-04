@@ -3,7 +3,9 @@ package simpleorm;
 //Entidade de exemplo
 
 import java.util.Objects;
-
+// SQL para definir as tabelas:
+// create table user (id int auto_increment primary key, name varchar(100) not null);
+// create table post (id int auto_increment primary key, text varchar(100) not null, user int references user (id));
 @SQLTable("user")
 public class Usuario {
     @SQLField(value = "id", isId = true)
@@ -43,5 +45,7 @@ public class Usuario {
         }
         return true;
     }
-    
+    @Override public String toString() {
+        return "codigo:" + this.codigo + ",nome:" + this.nome;
+    }
 }
