@@ -66,4 +66,11 @@ class ImStack<T> {
     public boolean isEmpty() {
         return head == null && tail == null;
     }
+    T getLast() {
+        if(tail == null) {
+            return head;
+        } else {
+            return tail.getLast();
+        }
+    }
 }

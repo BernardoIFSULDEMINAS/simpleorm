@@ -25,6 +25,7 @@ public class DAO<T>
 {
 	private List<PathToDbField> fields;
 	private List<PathToDbField> ids;
+        private Map<Class<?>,DAO<?>> mapaDaos = new HashMap<>();
 	private SQLTable t;
 	private DBConnection db;
 	private Class<T> classe;
@@ -57,6 +58,7 @@ public class DAO<T>
 			} else {
 				// É algo relacionado, quando precisamos armazenar algo relacionado, armazenamos suas primary keys
 				FieldTree ids = FieldTree.fromClass(p.getType());
+                                mapaDaos.put(p.getType(), new DAO(p.getType(), db));
 				ids.setField(p);
 				for(DBField id : ids.toList()) {
 					if(!s_f.value().equals("")) {
@@ -285,8 +287,24 @@ public class DAO<T>
         private T fromRs(ResultSet rs) throws SQLException {
             try {
                 T coisa = this.classe.getConstructor().newInstance();
+                Map<Field,List<Object>> fieldToIds = new HashMap<>();
                 for(PathToDbField pdbf : this.fields) {
-                    setFromPathToDbField(coisa, pdbf.fieldStack, SQLType.fromSimpleToPst(pdbf.dbf, rs, pdbf.dbf.getJavaClass()));
+                    DAO<?> daoField = mapaDaos.getOrDefault(pdbf.fieldStack.peek(), null);
+                    if(daoField == null) {
+                        setFromPathToDbField(coisa, pdbf.fieldStack, SQLType.fromSimpleToPst(pdbf.dbf, rs, pdbf.dbf.getJavaClass()));
+                    } else {
+                        // Settar algo relacionado.
+                        List<Object> maybeIds = fieldToIds.getOrDefault(pdbf.fieldStack.peek(), null);
+                        if(maybeIds == null) {
+                            List<Object> ids = new ArrayList<>();
+                            fieldToIds.put(pdbf.fieldStack.peek(), ids);
+                            maybeIds = ids;
+                        }
+                        maybeIds.add(SQLType.fromSimpleToPst(pdbf.dbf, rs, pdbf.fieldStack.getLast().getType()));
+                    }
+                }
+                for(Map.Entry<Field,List<Object>> item : fieldToIds.entrySet()) {
+                    setFromPathToDbField(coisa, new ImStack(item.getKey(), null), mapaDaos.get(item.getKey().getType()).localizar(item.getValue()));
                 }
                 return coisa;
             } catch(NoSuchMethodException e) {
