@@ -252,12 +252,20 @@ public class DAO<T>
 	}
 	
 	public boolean salvar(T coisa) throws SQLException {
+                List<Object> ids = new ArrayList<>();
 		for(PathToDbField pdbf : this.ids) {
-			if(getFromPathToDbField(coisa,pdbf.fieldStack) == null) {
-				return criar(coisa);
-			}
+                    Object id = getFromPathToDbField(coisa,pdbf.fieldStack);
+                    if(id == null) {
+                        return criar(coisa);
+                    }
+                    ids.add(id);
 		}
-		return mudar(coisa);
+                Object talvez = this.localizar(ids.toArray());
+                if(talvez == null) {
+                    return criar(coisa);
+                } else {
+                    return mudar(coisa);
+                }
 	}
 	
 	public boolean apagar(T coisa) throws SQLException {
@@ -289,7 +297,7 @@ public class DAO<T>
                 T coisa = this.classe.getConstructor().newInstance();
                 Map<Field,List<Object>> fieldToIds = new HashMap<>();
                 for(PathToDbField pdbf : this.fields) {
-                    DAO<?> daoField = mapaDaos.getOrDefault(pdbf.fieldStack.peek(), null);
+                    DAO<?> daoField = mapaDaos.getOrDefault(pdbf.fieldStack.peek().getType(), null);
                     if(daoField == null) {
                         setFromPathToDbField(coisa, pdbf.fieldStack, SQLType.fromSimpleToPst(pdbf.dbf, rs, pdbf.dbf.getJavaClass()));
                     } else {
@@ -304,7 +312,7 @@ public class DAO<T>
                     }
                 }
                 for(Map.Entry<Field,List<Object>> item : fieldToIds.entrySet()) {
-                    setFromPathToDbField(coisa, new ImStack(item.getKey(), null), mapaDaos.get(item.getKey().getType()).localizar(item.getValue()));
+                    setFromPathToDbField(coisa, new ImStack(item.getKey(), null), mapaDaos.get(item.getKey().getType()).localizar(item.getValue().toArray()));
                 }
                 return coisa;
             } catch(NoSuchMethodException e) {
@@ -312,7 +320,9 @@ public class DAO<T>
                 throw new RuntimeException("Classe " + this.classe + " deve ter um construtor vazio!");
             } catch (Exception e) {
                 //Espero que Java esteja feliz agora
-                throw new RuntimeException(e.getMessage());
+                RuntimeException re = new RuntimeException(e.getMessage());
+                re.setStackTrace(e.getStackTrace());
+                throw re;
             }
         }
         
@@ -334,7 +344,7 @@ public class DAO<T>
                 vdbf.val = ids[i];
                 idparams.add(vdbf);
                 if(i != this.ids.size() - 1) {
-                    sb.append(",");
+                    sb.append(" and ");
                 }
             }
             sb.append(";");
@@ -345,7 +355,11 @@ public class DAO<T>
                 i_query++;
             }
             ResultSet rs = ps.executeQuery();
-            rs.next();
+            
+            boolean hasElements = rs.next();
+            if(!hasElements) {
+                return null;
+            }
             return fromRs(rs);
 	}
 	

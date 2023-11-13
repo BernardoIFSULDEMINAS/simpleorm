@@ -63,7 +63,7 @@ enum SQLType {
                         c.setTime(d);
                         return c;
                     } else {
-                        throw new IllegalArgumentException("Classe " + to + " não bate com tipo " + dbf.getType());
+                        throw new IllegalArgumentException("Calendários: Classe " + to + " não bate com tipo " + dbf.getType());
                     }
                 case Float:
                     return rs.getDouble(n);

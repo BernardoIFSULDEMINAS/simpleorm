@@ -3,13 +3,15 @@ package simpleorm;
 import java.util.Objects;
 
 //Entidade de exemplo
+
+import java.util.Objects;
+
 @SQLTable("post")
 public class Post {
     @SQLField(value = "id", isId = true)
     private Integer id;
     public Integer getId() {return this.id;}
-    public void setId(Integer tantofaz3) {this.id = tantofaz3;}
-    public void setCodigo(Integer id) {this.id = id;}
+    public void setId(Integer id) {this.id = id;}
     @SQLField("text")
     private String texto;
     public String getTexto() {return this.texto;}
@@ -18,22 +20,40 @@ public class Post {
     private Usuario author;
     public Usuario getAuthor() {return this.author;}
     public void setAuthor(Usuario tantofaz2) {this.author = tantofaz2;}
-    @Override public boolean equals(Object other)  {
-        if(this == other) return true;
-        if(other == null) return false;
-        if(getClass() != other.getClass()) return false;
-        Post o = (Post)other;
-        if(!Objects.equals(this.id, o.id)) return false;
-        if(!Objects.equals(this.texto, o.texto)) return false;
-        if(!Objects.equals(this.author, o.author)) return false;
-        return true;
-    }
-    @Override public int hashCode() {
-        int hash = 11;
-        hash = 23 * hash + Objects.hash(this.id, this.author, this.texto);
-        return hash;
-    }
     @Override public String toString() {
         return "id:" + this.id + ",texto:" + this.texto + ",author:(" + this.author + ")";
     }
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + Objects.hashCode(this.id);
+        hash = 67 * hash + Objects.hashCode(this.texto);
+        hash = 67 * hash + Objects.hashCode(this.author);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Post other = (Post) obj;
+        if (!Objects.equals(this.texto, other.texto)) {
+            return false;
+        }
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        if (!Objects.equals(this.author, other.author)) {
+            return false;
+        }
+        return true;
+    }
+    
 }

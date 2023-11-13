@@ -45,14 +45,22 @@ public class AppTest
 	public void testePrincipal() throws SQLException {
 		// Rode mvn test -e -Dtest=AppTest#testePrincipal
 		// Depois de cada teste, no SQL:
-		// delete from post; alter table post auto_increment = 1; delete from user; alter table user auto_increment = 1;
+		// delete from friendship; delete from post; alter table post auto_increment = 1; delete from user; alter table user auto_increment = 1;
 		salvarSimples();
 		salvarRelacionado();
+                salvarUsuario2();
+                salvarAmizade();
 		mudarSimples();
 		mudarRelacionado();
 		apagar();
 	}
-	
+    
+        
+        @Test
+        public void salvarUsuario2() throws SQLException {
+            DAO<Usuario> dao_user = new DAO<>(Usuario.class, new ConectorMySql());
+            assertTrue(dao_user.salvar(usuarioExemplo2()));
+        }
     @Test
     public void salvarSimples() throws SQLException {
 		try {
@@ -72,14 +80,26 @@ public class AppTest
             DAO<Post> dao = new DAO<>(Post.class, new ConectorMySql());
             Post p = postExemplo();
             assertTrue(dao.salvar(p));
-            p.setCodigo(1);
+            p.setId(1);
             assertEquals(p, dao.localizar(1));
-			
 		} catch (RuntimeException e) {
 			e.printStackTrace();
 			throw e;
 		}
 	}
+        @Test
+        public void salvarAmizade() throws SQLException {
+            Usuario u1 = usuarioExemplo();
+            u1.setCodigo(1);
+            Usuario u2 = usuarioExemplo2();
+            u2.setCodigo(2);
+            Friendship f = new Friendship();
+            f.setUser1(u1);
+            f.setUser2(u2);
+            DAO<Friendship> dao = new DAO(Friendship.class, new ConectorMySql());
+            assertTrue(dao.salvar(f));
+            assertEquals(f, dao.localizar(1,2));
+        }
         
         @Test
         public void mudarSimples() throws SQLException {
@@ -104,7 +124,7 @@ public class AppTest
 				DAO<Usuario> dao_user = new DAO<>(Usuario.class, new ConectorMySql());
 				dao_user.salvar(usuarioExemplo2());
                 Post p = postExemplo();
-                p.setCodigo(1);
+                p.setId(1);
                 p.setTexto("texto_mudado");
                 p.setAuthor(nu);
                 assertTrue(dao.salvar(p));
@@ -119,7 +139,7 @@ public class AppTest
             try {
                 DAO<Post> dao = new DAO<>(Post.class, new ConectorMySql());
                 Post p = postExemplo();
-                p.setCodigo(1);
+                p.setId(1);
                 assertTrue(dao.apagar(p));
             } catch(RuntimeException e) {
                 e.printStackTrace();

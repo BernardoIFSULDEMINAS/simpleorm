@@ -31,7 +31,11 @@ class DBField {
 		SQLType s_type = SQLType.fromClass(p.getType());
 		if(s_type != null) {
 			DBField d_f = new DBField();
-			d_f.setName(s_f.value());
+                        if(s_f.value().equals("")) {
+                            d_f.setName(p.getName());
+                        } else {
+                            d_f.setName(s_f.value());
+                        }
 			d_f.setType(s_type);
                         d_f.setJavaClass(p.getType());
 			return d_f;

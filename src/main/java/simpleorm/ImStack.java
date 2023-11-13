@@ -69,8 +69,10 @@ class ImStack<T> {
     T getLast() {
         if(tail == null) {
             return head;
-        } else {
-            return tail.getLast();
         }
+        if(tail.head == null) {
+            return head;
+        }
+        return tail.getLast();
     }
 }
