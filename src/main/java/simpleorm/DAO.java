@@ -75,11 +75,12 @@ public class DAO<T>
 	}
 	
 	private static Object getFromObj(Object coisa, Field p) {
+                ClassUtils u = new ClassUtils();
 		String javaFieldName = p.getName();
 		String methodName = "get" + javaFieldName.substring(0,1).toUpperCase() + javaFieldName.substring(1);
 		Class<?> classe = coisa.getClass();
 		try {
-			Method m = classe.getMethod(methodName);
+                        Method m = u.findLaxMethod(classe, methodName);
 			return m.invoke(coisa);
 		} catch(NoSuchMethodException e) {
 			System.err.println(e.getMessage());
@@ -93,11 +94,12 @@ public class DAO<T>
 	}
 	
 	private static void setFromObj(Object coisa, Field p, Object c) {
+                ClassUtils u = new ClassUtils();
 		String javaFieldName = p.getName();
 		Class<?> classe = coisa.getClass();
 		String methodName = "set" + javaFieldName.substring(0,1).toUpperCase() + javaFieldName.substring(1);
 		try {
-			Method m = classe.getMethod(methodName, c.getClass());
+			Method m = u.findLaxMethod(classe, methodName, c.getClass());
 			m.invoke(coisa, c);
 		} catch(NoSuchMethodException e) {
 			System.err.println(e.getMessage());
