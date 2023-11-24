@@ -18,7 +18,22 @@ public class AppTest
     {
         assertTrue( true );
     }
-    
+        private Friendship friendshipExemplo() {
+            Usuario u1 = usuarioExemplo();
+            u1.setCodigo(1);
+            Usuario u2 = usuarioExemplo2();
+            u2.setCodigo(2);
+            Friendship f = new Friendship();
+            f.setUser1(u1);
+            f.setUser2(u2);
+            return f;
+        }
+        private FriendshipName friendshipNameExemplo() {
+            FriendshipName fsn = new FriendshipName();
+            fsn.setFs(friendshipExemplo());
+            fsn.setN("ola");
+            return fsn;
+        }
 	public Usuario usuarioExemplo() {
 		Usuario u = new Usuario();
 		u.setNome("joão");
@@ -50,8 +65,10 @@ public class AppTest
 		salvarRelacionado();
                 salvarUsuario2();
                 salvarAmizade();
+                salvarFsn();
 		mudarSimples();
 		mudarRelacionado();
+                apagarFsn();
 		apagar();
 	}
     
@@ -89,16 +106,16 @@ public class AppTest
 	}
         @Test
         public void salvarAmizade() throws SQLException {
-            Usuario u1 = usuarioExemplo();
-            u1.setCodigo(1);
-            Usuario u2 = usuarioExemplo2();
-            u2.setCodigo(2);
-            Friendship f = new Friendship();
-            f.setUser1(u1);
-            f.setUser2(u2);
+            Friendship f = friendshipExemplo();
             DAO<Friendship> dao = new DAO(Friendship.class, new ConectorMySql());
             assertTrue(dao.salvar(f));
             assertEquals(f, dao.localizar(1,2));
+        }
+        
+        @Test
+        public void salvarFsn() throws SQLException {
+            DAO<FriendshipName> dao = new DAO(FriendshipName.class, new ConectorMySql());
+            assertTrue(dao.salvar(friendshipNameExemplo()));
         }
         
         @Test
@@ -132,6 +149,12 @@ public class AppTest
                 e.printStackTrace();
                 throw e;
             }
+        }
+        
+        @Test
+        public void apagarFsn() throws SQLException {
+            DAO<FriendshipName> dao = new DAO(FriendshipName.class, new ConectorMySql());
+            assertTrue(dao.apagar(friendshipNameExemplo()));
         }
         
         @Test

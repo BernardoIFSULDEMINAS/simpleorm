@@ -88,6 +88,7 @@ class FieldTree {
 					ids.add(this_tree);
 				} else {
 					FieldTree this_tree = FieldTree.fromClass(p.getType());
+                                        this_tree.setField(p);
                                         if(!s_f.prefix().equals("") || !s_f.value().equals("")) {
                                             for(DBField dbf : this_tree.toList()) {
                                                 if(!s_f.value().equals("")) {
@@ -97,10 +98,19 @@ class FieldTree {
                                                 }
                                             }
                                         }
+                                        System.out.println(cl + " tem " + p.getType());
+                                        System.out.println(this_tree);
                                         ids.add(this_tree);
 				}
 			}
 		}
+                System.out.println("Final:"+tree);
 		return tree;
 	}
+
+    @Override
+    public String toString() {
+        return "FieldTree{" + "dbField=" + dbField + ", subFields=" + subFields + ", field=" + field + '}';
+    }
+        
 }

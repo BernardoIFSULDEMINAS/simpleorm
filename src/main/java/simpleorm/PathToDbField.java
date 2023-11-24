@@ -25,4 +25,9 @@ public class PathToDbField {
                         if((this.fieldStack == null) != (other.fieldStack == null)) return false;
                 	return other.dbf.equals(this.dbf) && other.fieldStack.equals(this.fieldStack);
 		}
+
+    @Override
+    public String toString() {
+        return "PathToDbField{" + "fieldStack=" + fieldStack + ", dbf=" + dbf + '}';
+    }
 	}
