@@ -87,7 +87,17 @@ class FieldTree {
 					this_tree.setDbField(maybe);
 					ids.add(this_tree);
 				} else {
-					ids.add(FieldTree.fromClass(p.getType()));
+					FieldTree this_tree = FieldTree.fromClass(p.getType());
+                                        if(!s_f.prefix().equals("") || !s_f.value().equals("")) {
+                                            for(DBField dbf : this_tree.toList()) {
+                                                if(!s_f.value().equals("")) {
+                                                    dbf.setName(s_f.value());
+                                                } else {
+                                                    dbf.setName(s_f.prefix() + dbf.getName());
+                                                }
+                                            }
+                                        }
+                                        ids.add(this_tree);
 				}
 			}
 		}

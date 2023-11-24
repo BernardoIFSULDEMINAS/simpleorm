@@ -17,8 +17,17 @@ public class ClassUtils {
             return classe.getMethod(methodName, params);
         } catch (NoSuchMethodException e) {
             for(Method m : classe.getMethods()) {
-                if(m.getName().equals(methodName) && Arrays.equals(m.getParameterTypes(), params)) {
-                    return m;
+                if(m.getName().equals(methodName) && m.getParameterCount() == params.length) {
+                    Class[] theirParams = m.getParameterTypes();
+                    boolean shouldReturnThis = true;
+                    for(int i = 0; i < params.length; i++) {
+                        if(!theirParams[i].isAssignableFrom(params[i])) {
+                            shouldReturnThis = false;
+                        }
+                        if(shouldReturnThis) {
+                            return m;
+                        }
+                    }
                 }
             }
         }

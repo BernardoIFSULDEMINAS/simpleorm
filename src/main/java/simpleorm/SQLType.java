@@ -3,7 +3,9 @@ import java.util.Calendar;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
 import java.util.GregorianCalendar;
 enum SQLType {
 	VarChar, Int, DateTime, Float;
@@ -34,8 +36,8 @@ enum SQLType {
 					break;
 				case DateTime:
 					if(Calendar.class.isAssignableFrom(value.getClass())) {
-						java.util.Date d = ((Calendar)value).getTime();
-						pst.setDate(i+1, new java.sql.Date(d.getTime()));
+                                                long epoca = ((Calendar)value).getTimeInMillis();
+                                                pst.setTimestamp(i, Timestamp.from(Instant.ofEpochMilli(epoca)));
 					} else {
 						throw new IllegalArgumentException("Classe " + value.getClass() + " não bate com tipo " + type);
 					}
@@ -57,10 +59,10 @@ enum SQLType {
                 case Int:
                     return rs.getInt(n);
                 case DateTime:
-                    java.util.Date d = rs.getDate(n);
+                    Timestamp t = rs.getTimestamp(n);
                     if(to.isAssignableFrom(Calendar.class)) {
                         Calendar c = new GregorianCalendar();
-                        c.setTime(d);
+                        c.setTimeInMillis(t.getTime());
                         return c;
                     } else {
                         throw new IllegalArgumentException("Calendários: Classe " + to + " não bate com tipo " + dbf.getType());
