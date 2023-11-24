@@ -116,7 +116,6 @@ public class DAO<T>
 	private static Object getFromPathToDbField(Object coisa, ImStack<Field> st) {
 		Field f = st.peek();
 		st = st.pop();
-                System.out.println(st);
 		while(st != null && f != null) {
 			coisa = getFromObj(coisa, f);
 			f = st.peek();
