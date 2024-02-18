@@ -1,3 +1,9 @@
+// SPDX-FileCopyrightText: 2023 Bernardo Gomes Negri<bernardo.negri@alunos.ifsuldeminas.edu.br>
+// SPDX-License-Identifier: CC-BY-SA-3.0
+// Original link: https://codereview.stackexchange.com/questions/32991/how-is-my-implementation-of-an-immutable-stack
+// Original by "user2894168" on stackexchange
+// Changes were made: the additions of the methods equals, toString, reverseAndFilter, reverseInner and getLast. The method reverse was modified as well
+
 package simpleorm;
 import java.util.function.Predicate;
 class ImStack<T> {
