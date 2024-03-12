@@ -9,6 +9,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.stream.Collectors;
 import java.lang.reflect.Field;
+import simpleorm.Utils;
 
 class FieldTree {
 	// Tem subFields se se referir a outra classe (for uma chave estrangeira)
@@ -102,13 +103,13 @@ class FieldTree {
                                                 }
                                             }
                                         }
-                                        System.out.println(cl + " tem " + p.getType());
-                                        System.out.println(this_tree);
+                                        Utils.debugPrint(cl + " tem " + p.getType());
+                                        Utils.debugPrint(this_tree);
                                         ids.add(this_tree);
 				}
 			}
 		}
-                System.out.println("Final:"+tree);
+                Utils.debugPrint("Final:"+tree);
 		return tree;
 	}
 
