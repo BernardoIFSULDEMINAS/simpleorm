@@ -75,17 +75,17 @@ public class DAO<T>
 				addField(s_f, ids, fieldsTree, idsTree);
 			}
 		}
-                this.fields = fieldsTree.traverse();
-                this.ids = idsTree.traverse();
+		this.fields = fieldsTree.traverse();
+		this.ids = idsTree.traverse();
 	}
 	
 	private static Object getFromObj(Object coisa, Field p) {
-                ClassUtils u = new ClassUtils();
+		ClassUtils u = new ClassUtils();
 		String javaFieldName = p.getName();
 		String methodName = "get" + javaFieldName.substring(0,1).toUpperCase() + javaFieldName.substring(1);
 		Class<?> classe = coisa.getClass();
 		try {
-                        Method m = u.findLaxMethod(classe, methodName);
+			Method m = u.findLaxMethod(classe, methodName);
 			return m.invoke(coisa);
 		} catch(NoSuchMethodException e) {
 			System.err.println(e.getMessage());
@@ -119,8 +119,8 @@ public class DAO<T>
 	}
 	
 	private static Object getFromPathToDbField(Object coisa, ImStack<Field> st) {
-                Utils.debugPrint(coisa.getClass());
-                Utils.debugPrint(st);
+		Utils.debugPrint(coisa.getClass());
+		Utils.debugPrint(st);
 		Field f = st.peek();
 		st = st.pop();
 		while(st != null && f != null) {
@@ -131,25 +131,25 @@ public class DAO<T>
 		return coisa;
 	}
 	private static void setFromPathToDbField(Object coisa, ImStack<Field> st, Object val) {
-            Field f;
-            f = st.peek();
-            st = st.pop();
-            try {
-                while(st != null && f != null && !st.isEmpty()) {
-                    Object coisa_t = getFromObj(coisa, f);
-                    if(coisa_t == null) {
-                        setFromObj(coisa, f, f.getType().getConstructor().newInstance());
-                        coisa_t = getFromObj(coisa, f);
-                    }
-                    coisa = coisa_t;
-                    f = st.peek();
-                    st = st.pop();
-                }
-                setFromObj(coisa, f, val);
-            } catch(InstantiationException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException("Classe " + f.getType() + " precisa ter um construtor vazio público");
-            }
-        }
+		Field f;
+		f = st.peek();
+		st = st.pop();
+		try {
+			while(st != null && f != null && !st.isEmpty()) {
+				Object coisa_t = getFromObj(coisa, f);
+				if(coisa_t == null) {
+					setFromObj(coisa, f, f.getType().getConstructor().newInstance());
+					coisa_t = getFromObj(coisa, f);
+				}
+				coisa = coisa_t;
+				f = st.peek();
+				st = st.pop();
+			}
+			setFromObj(coisa, f, val);
+		} catch(InstantiationException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			throw new RuntimeException("Classe " + f.getType() + " precisa ter um construtor vazio público");
+		}
+	}
 	//Eu tenho mil dessas subclasses que têm literalmente só dois campos
 	//Por isso que Haskell é melhor: tem tuplas onde você pode armazenar
 	//qualquer grupo de coisas
@@ -157,47 +157,47 @@ public class DAO<T>
 		Object val;
 		DBField dbf;
 	}
-        
-        private List<ValueAndDbField> addNonIdParens(T coisa, StringBuilder sb) {
-            if(sb != null) sb.append(" (");
-            List<ValueAndDbField> nonidparens = new ArrayList<>();
-            for(int i = 0; i < fields.size(); i++) {
-                PathToDbField pdbf = fields.get(i);
-                Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
-                if(this_val == null && ids.contains(pdbf)) {
-                        continue;
-                }
-                ValueAndDbField vdbf = new ValueAndDbField();
-                vdbf.val = this_val;
-                vdbf.dbf = pdbf.dbf;
-                nonidparens.add(vdbf);
-                if(sb != null) sb.append(pdbf.dbf.getName());
-                if(i != fields.size() - 1 && sb != null) {
-                        sb.append(",");
-                }
-            }
-            return nonidparens;
-        }
-        
-        private List<ValueAndDbField> addIdParens(T coisa, StringBuilder sb) {
-            if(sb != null) sb.append(" (");
-            List<ValueAndDbField> idparens = new ArrayList<>();
-            for(int i = 0; i < ids.size(); i++) {
-                PathToDbField pdbf = ids.get(i);
-                Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
-                ValueAndDbField vdbf = new ValueAndDbField();
-                vdbf.val = this_val;
-                vdbf.dbf = pdbf.dbf;
-                idparens.add(vdbf);
-                if(sb != null) sb.append(pdbf.dbf.getName());
-                if(i != ids.size() - 1 && sb != null) {
-                        sb.append(",");
-                }
-            }
-            return idparens;
-        }
-        
-	private boolean criar(T coisa) throws SQLException {
+	
+	private List<ValueAndDbField> addNonIdParens(T coisa, StringBuilder sb) {
+		if(sb != null) sb.append(" (");
+		List<ValueAndDbField> nonidparens = new ArrayList<>();
+		for(int i = 0; i < fields.size(); i++) {
+			PathToDbField pdbf = fields.get(i);
+			Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
+			if(this_val == null && ids.contains(pdbf)) {
+				continue;
+			}
+			ValueAndDbField vdbf = new ValueAndDbField();
+			vdbf.val = this_val;
+			vdbf.dbf = pdbf.dbf;
+			nonidparens.add(vdbf);
+			if(sb != null) sb.append(pdbf.dbf.getName());
+			if(i != fields.size() - 1 && sb != null) {
+				sb.append(",");
+			}
+		}
+		return nonidparens;
+	}
+	
+	private List<ValueAndDbField> addIdParens(T coisa, StringBuilder sb) {
+		if(sb != null) sb.append(" (");
+		List<ValueAndDbField> idparens = new ArrayList<>();
+		for(int i = 0; i < ids.size(); i++) {
+			PathToDbField pdbf = ids.get(i);
+			Object this_val = getFromPathToDbField(coisa, pdbf.fieldStack);
+			ValueAndDbField vdbf = new ValueAndDbField();
+			vdbf.val = this_val;
+			vdbf.dbf = pdbf.dbf;
+			idparens.add(vdbf);
+			if(sb != null) sb.append(pdbf.dbf.getName());
+			if(i != ids.size() - 1 && sb != null) {
+				sb.append(",");
+			}
+		}
+		return idparens;
+	}
+	
+	public boolean criar(T coisa) throws SQLException {
 		StringBuilder sb = new StringBuilder();
 		sb.append("insert into ");
 		sb.append(this.t.value());
@@ -222,168 +222,168 @@ public class DAO<T>
 		return ret > 0;
 	}
 	
-	private boolean mudar(T coisa) throws SQLException {
-            StringBuilder sb = new StringBuilder();
-            sb.append("update ");
-            sb.append(this.t.value());
-            sb.append(" set ");
-            List<ValueAndDbField> nonidfields = addNonIdParens(coisa, null);
-            for(int i = 0; i < nonidfields.size(); i++) {
-                ValueAndDbField vdbf = nonidfields.get(i);
-                sb.append(vdbf.dbf.getName());
-                sb.append("=?");
-                if(i != nonidfields.size() - 1) {
-                    sb.append(",");
-                }
-            }
-            sb.append(" where ");
-            List<ValueAndDbField> idfields = addIdParens(coisa, null);
-            for(int i = 0; i < idfields.size(); i++) {
-                ValueAndDbField vdbf = idfields.get(i);
-                sb.append(vdbf.dbf.getName());
-                sb.append("=?");
-                if(i != idfields.size() - 1) {
-                    sb.append(" and ");
-                }
-            }
-            sb.append(";");
-            PreparedStatement ps = this.db.getStatement(sb.toString());
-            int i_fields = 1;
-            for(ValueAndDbField vdbf : nonidfields) {
-                SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_fields);
-                i_fields++;
-            }
-            for(ValueAndDbField vdbf : idfields) {
-                SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_fields);
-                i_fields++;
-            }
-            return ps.executeUpdate() > 0;
+	public boolean mudar(T coisa) throws SQLException {
+		StringBuilder sb = new StringBuilder();
+		sb.append("update ");
+		sb.append(this.t.value());
+		sb.append(" set ");
+		List<ValueAndDbField> nonidfields = addNonIdParens(coisa, null);
+		for(int i = 0; i < nonidfields.size(); i++) {
+			ValueAndDbField vdbf = nonidfields.get(i);
+			sb.append(vdbf.dbf.getName());
+			sb.append("=?");
+			if(i != nonidfields.size() - 1) {
+				sb.append(",");
+			}
+		}
+		sb.append(" where ");
+		List<ValueAndDbField> idfields = addIdParens(coisa, null);
+		for(int i = 0; i < idfields.size(); i++) {
+			ValueAndDbField vdbf = idfields.get(i);
+			sb.append(vdbf.dbf.getName());
+			sb.append("=?");
+			if(i != idfields.size() - 1) {
+				sb.append(" and ");
+			}
+		}
+		sb.append(";");
+		PreparedStatement ps = this.db.getStatement(sb.toString());
+		int i_fields = 1;
+		for(ValueAndDbField vdbf : nonidfields) {
+			SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_fields);
+			i_fields++;
+		}
+		for(ValueAndDbField vdbf : idfields) {
+			SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_fields);
+			i_fields++;
+		}
+		return ps.executeUpdate() > 0;
 	}
 	
 	public boolean salvar(T coisa) throws SQLException {
-                List<Object> ids = new ArrayList<>();
+		List<Object> ids = new ArrayList<>();
 		for(PathToDbField pdbf : this.ids) {
-                    Object id = getFromPathToDbField(coisa,pdbf.fieldStack);
-                    if(id == null) {
-                        return criar(coisa);
-                    }
-                    ids.add(id);
+			Object id = getFromPathToDbField(coisa,pdbf.fieldStack);
+			if(id == null) {
+				return criar(coisa);
+			}
+			ids.add(id);
 		}
-                Object talvez = this.localizar(ids.toArray());
-                if(talvez == null) {
-                    return criar(coisa);
-                } else {
-                    return mudar(coisa);
-                }
+		Object talvez = this.localizar(ids.toArray());
+		if(talvez == null) {
+			return criar(coisa);
+		} else {
+			return mudar(coisa);
+		}
 	}
 	
 	public boolean apagar(T coisa) throws SQLException {
-            StringBuilder sb = new StringBuilder();
-            sb.append("delete from ");
-            sb.append(this.t.value());
-            sb.append(" where ");
-            List<ValueAndDbField> idfields = addIdParens(coisa, null);
-            for(int i = 0; i < idfields.size(); i++) {
-                ValueAndDbField vdbf = idfields.get(i);
-                sb.append(vdbf.dbf.getName());
-                sb.append("=?");
-                if(i != idfields.size() - 1) {
-                    sb.append(" and ");
-                }
-            }
-            sb.append(";");
-            PreparedStatement ps = this.db.getStatement(sb.toString());
-            int i_fields = 1;
-            for(ValueAndDbField vdbf : idfields) {
-                SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_fields);
-                i_fields++;
-            }
-            return ps.executeUpdate() > 0;
+		StringBuilder sb = new StringBuilder();
+		sb.append("delete from ");
+		sb.append(this.t.value());
+		sb.append(" where ");
+		List<ValueAndDbField> idfields = addIdParens(coisa, null);
+		for(int i = 0; i < idfields.size(); i++) {
+			ValueAndDbField vdbf = idfields.get(i);
+			sb.append(vdbf.dbf.getName());
+			sb.append("=?");
+			if(i != idfields.size() - 1) {
+				sb.append(" and ");
+			}
+		}
+		sb.append(";");
+		PreparedStatement ps = this.db.getStatement(sb.toString());
+		int i_fields = 1;
+		for(ValueAndDbField vdbf : idfields) {
+			SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_fields);
+			i_fields++;
+		}
+		return ps.executeUpdate() > 0;
 	}
 	
-        private T fromRs(ResultSet rs) throws SQLException {
-            try {
-                T coisa = this.classe.getConstructor().newInstance();
-                Map<Field,List<Object>> fieldToIds = new HashMap<>();
-                for(PathToDbField pdbf : this.fields) {
-                    DAO<?> daoField = mapaDaos.getOrDefault(pdbf.fieldStack.peek().getType(), null);
-                    if(daoField == null) {
-                        setFromPathToDbField(coisa, pdbf.fieldStack, SQLType.fromSimpleToPst(pdbf.dbf, rs, pdbf.dbf.getJavaClass()));
-                    } else {
-                        // Settar algo relacionado.
-                        List<Object> maybeIds = fieldToIds.getOrDefault(pdbf.fieldStack.peek(), null);
-                        if(maybeIds == null) {
-                            List<Object> ids = new ArrayList<>();
-                            fieldToIds.put(pdbf.fieldStack.peek(), ids);
-                            maybeIds = ids;
-                        }
-                        maybeIds.add(SQLType.fromSimpleToPst(pdbf.dbf, rs, pdbf.fieldStack.getLast().getType()));
-                    }
-                }
-                for(Map.Entry<Field,List<Object>> item : fieldToIds.entrySet()) {
-                    setFromPathToDbField(coisa, new ImStack(item.getKey(), null), mapaDaos.get(item.getKey().getType()).localizar(item.getValue().toArray()));
-                }
-                return coisa;
-            } catch(NoSuchMethodException e) {
-                System.err.println(e.getMessage());
-                throw new RuntimeException("Classe " + this.classe + " deve ter um construtor vazio!");
-            } catch (Exception e) {
-                //Espero que Java esteja feliz agora
-                RuntimeException re = new RuntimeException(e.getMessage());
-                re.setStackTrace(e.getStackTrace());
-                throw re;
-            }
-        }
-        
+	private T fromRs(ResultSet rs) throws SQLException {
+		try {
+			T coisa = this.classe.getConstructor().newInstance();
+			Map<Field,List<Object>> fieldToIds = new HashMap<>();
+			for(PathToDbField pdbf : this.fields) {
+				DAO<?> daoField = mapaDaos.getOrDefault(pdbf.fieldStack.peek().getType(), null);
+				if(daoField == null) {
+					setFromPathToDbField(coisa, pdbf.fieldStack, SQLType.fromSimpleToPst(pdbf.dbf, rs, pdbf.dbf.getJavaClass()));
+				} else {
+					// Settar algo relacionado.
+					List<Object> maybeIds = fieldToIds.getOrDefault(pdbf.fieldStack.peek(), null);
+					if(maybeIds == null) {
+						List<Object> ids = new ArrayList<>();
+						fieldToIds.put(pdbf.fieldStack.peek(), ids);
+						maybeIds = ids;
+					}
+					maybeIds.add(SQLType.fromSimpleToPst(pdbf.dbf, rs, pdbf.fieldStack.getLast().getType()));
+				}
+			}
+			for(Map.Entry<Field,List<Object>> item : fieldToIds.entrySet()) {
+				setFromPathToDbField(coisa, new ImStack(item.getKey(), null), mapaDaos.get(item.getKey().getType()).localizar(item.getValue().toArray()));
+			}
+			return coisa;
+		} catch(NoSuchMethodException e) {
+			System.err.println(e.getMessage());
+			throw new RuntimeException("Classe " + this.classe + " deve ter um construtor vazio!");
+		} catch (Exception e) {
+			//Espero que Java esteja feliz agora
+			RuntimeException re = new RuntimeException(e.getMessage());
+			re.setStackTrace(e.getStackTrace());
+			throw re;
+		}
+	}
+	
 	public T localizar(Object... ids) throws SQLException {
-            StringBuilder sb = new StringBuilder();
-            sb.append("select * from ");
-            sb.append(this.t.value());
-            sb.append(" where ");
-            if(ids.length != this.ids.size()) {
-                throw new IllegalArgumentException("Por favor dê " + this.ids.size() + " argumentos");
-            }
-            List<ValueAndDbField> idparams = new ArrayList<>();
-            for(int i = 0; i < this.ids.size(); i++) {
-                PathToDbField pdbf = this.ids.get(i);
-                sb.append(pdbf.dbf.getName());
-                sb.append("=?");
-                ValueAndDbField vdbf = new ValueAndDbField();
-                vdbf.dbf = pdbf.dbf;
-                vdbf.val = ids[i];
-                idparams.add(vdbf);
-                if(i != this.ids.size() - 1) {
-                    sb.append(" and ");
-                }
-            }
-            sb.append(";");
-            PreparedStatement ps = this.db.getStatement(sb.toString());
-            int i_query = 1;
-            for(ValueAndDbField vdbf : idparams) {
-                SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_query);
-                i_query++;
-            }
-            ResultSet rs = ps.executeQuery();
-            
-            boolean hasElements = rs.next();
-            if(!hasElements) {
-                return null;
-            }
-            return fromRs(rs);
+		StringBuilder sb = new StringBuilder();
+		sb.append("select * from ");
+		sb.append(this.t.value());
+		sb.append(" where ");
+		if(ids.length != this.ids.size()) {
+			throw new IllegalArgumentException("Por favor dê " + this.ids.size() + " argumentos");
+		}
+		List<ValueAndDbField> idparams = new ArrayList<>();
+		for(int i = 0; i < this.ids.size(); i++) {
+			PathToDbField pdbf = this.ids.get(i);
+			sb.append(pdbf.dbf.getName());
+			sb.append("=?");
+			ValueAndDbField vdbf = new ValueAndDbField();
+			vdbf.dbf = pdbf.dbf;
+			vdbf.val = ids[i];
+			idparams.add(vdbf);
+			if(i != this.ids.size() - 1) {
+				sb.append(" and ");
+			}
+		}
+		sb.append(";");
+		PreparedStatement ps = this.db.getStatement(sb.toString());
+		int i_query = 1;
+		for(ValueAndDbField vdbf : idparams) {
+			SQLType.addSimpleToPst(vdbf.dbf.getType(), vdbf.val, ps, i_query);
+			i_query++;
+		}
+		ResultSet rs = ps.executeQuery();
+		
+		boolean hasElements = rs.next();
+		if(!hasElements) {
+			return null;
+		}
+		return fromRs(rs);
 	}
 	
 	public List<T> getList() throws SQLException {
-            StringBuilder sb = new StringBuilder();
-            sb.append("select * from ");
-            sb.append(this.t.value());
-            sb.append(";");
-            PreparedStatement ps = this.db.getStatement(sb.toString());
-            ResultSet rs = ps.executeQuery();
-            List<T> ret = new ArrayList<>();
-            while(rs.next()) {
-                ret.add(fromRs(rs));
-            }
-            return ret;
+		StringBuilder sb = new StringBuilder();
+		sb.append("select * from ");
+		sb.append(this.t.value());
+		sb.append(";");
+		PreparedStatement ps = this.db.getStatement(sb.toString());
+		ResultSet rs = ps.executeQuery();
+		List<T> ret = new ArrayList<>();
+		while(rs.next()) {
+			ret.add(fromRs(rs));
+		}
+		return ret;
 	}
 }
 
